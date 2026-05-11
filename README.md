@@ -28,6 +28,19 @@ experiments/
 uv sync
 ```
 
+## Data
+
+This project uses NHS England PROMs data (Open Government Licence v3).
+
+**To obtain the data:**
+1. Visit https://digital.nhs.uk/data-and-information/publications/statistical/patient-reported-outcome-measures-proms/final-2023-24-data
+2. Download:
+   - "CSV Hip replacement Provider" → `data/raw/hip_provider_2324.csv`
+   - "CSV Hip and Knee Replacements Key Facts" → `data/raw/key_facts_2324.csv`
+3. The experiment can also run with synthetic data calibrated to these statistics
+
+Key facts from 2023/24: 78,000 hip replacement episodes, 55,000 pre-op responses, 21,000 post-op responses (62% post-operative non-response).
+
 ## Running Experiments
 
 Phases can be run independently:
@@ -65,6 +78,6 @@ Uses exponential backoff with jitter (30s initial, 300s max, 3 attempts) on top 
 
 ## Dataset
 
-NHS England PROMs: https://digital.nhs.uk/data-and-information/publications/statistical/patient-reported-outcome-measures-proms
+NHS England PROMs (Final 2023/24): https://digital.nhs.uk/data-and-information/publications/statistical/patient-reported-outcome-measures-proms/final-2023-24-data
 
 Licence: Open Government Licence v3

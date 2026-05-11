@@ -159,6 +159,16 @@ class ExperimentConfig:
 
 def load_population(config: ExperimentConfig) -> pd.DataFrame:
     """Load population data based on scenario config."""
+    from src.config import PROCESSED_DATA_DIR
+
+    # Try real data first
+    real_path = PROCESSED_DATA_DIR / "proms_hip_real.parquet"
+    if real_path.exists() and config.scenario != "low_effect":
+        df = pd.read_parquet(real_path)
+        print(f"Using REAL NHS PROMs data: {len(df)} patients")
+        return df
+
+    # Fall back to synthetic
     return get_or_create_synthetic(config=config.synthetic_config)
 
 
