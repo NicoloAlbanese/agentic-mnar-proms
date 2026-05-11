@@ -6,48 +6,74 @@ to run without downloading real data.
 
 The synthetic data preserves:
 - Realistic OHS score distributions (0-48 scale)
-- Typical health gain (~20 points)
+- Configurable health gain (effect size)
 - Correlation between pre/post scores
 - Covariate structure (age, gender, deprivation)
 """
 
 import numpy as np
 import pandas as pd
+from dataclasses import dataclass
 
 from src.config import PROCESSED_DATA_DIR, RANDOM_SEED
 
 
-def generate_synthetic_proms(
-    n: int = 10_000,
-    seed: int = RANDOM_SEED,
-) -> pd.DataFrame:
+@dataclass
+class SyntheticConfig:
+    """Configuration for synthetic data generation."""
+
+    n: int = 10_000
+    mean_pre: float = 18.0
+    sd_pre: float = 8.0
+    mean_post: float = 38.0
+    sd_post: float = 9.0
+    correlation: float = 0.3
+    seed: int = RANDOM_SEED
+    label: str = "default"
+
+    @property
+    def mean_gain(self) -> float:
+        return self.mean_post - self.mean_pre
+
+
+# Predefined scenarios
+SCENARIO_HIGH_EFFECT = SyntheticConfig(
+    mean_pre=18.0, sd_pre=8.0,
+    mean_post=38.0, sd_post=9.0,
+    label="high_effect",
+)
+
+SCENARIO_LOW_EFFECT = SyntheticConfig(
+    mean_pre=18.0, sd_pre=8.0,
+    mean_post=25.0, sd_post=8.0,
+    label="low_effect",
+)
+
+
+def generate_synthetic_proms(config: SyntheticConfig | None = None) -> pd.DataFrame:
     """Generate synthetic hip replacement PROMs data.
 
-    Based on published summary statistics from NHS PROMs reports:
-    - Mean pre-op OHS ≈ 18 (SD ≈ 8)
-    - Mean post-op OHS ≈ 38 (SD ≈ 9)
-    - Mean health gain ≈ 20 (SD ≈ 10)
-    - Correlation(pre, post) ≈ 0.3
-
     Args:
-        n: Number of patients to generate
-        seed: Random seed
+        config: SyntheticConfig with distribution parameters.
+                Defaults to high-effect scenario (standard hip replacement).
 
     Returns:
         DataFrame with ohs_pre, ohs_post, ohs_change, age_band, gender, imd_quintile
     """
-    rng = np.random.default_rng(seed)
+    if config is None:
+        config = SCENARIO_HIGH_EFFECT
+
+    rng = np.random.default_rng(config.seed)
 
     # Generate correlated pre/post scores using bivariate normal
-    mean_pre, sd_pre = 18.0, 8.0
-    mean_post, sd_post = 38.0, 9.0
-    correlation = 0.3
+    cov = [
+        [config.sd_pre**2, config.correlation * config.sd_pre * config.sd_post],
+        [config.correlation * config.sd_pre * config.sd_post, config.sd_post**2],
+    ]
 
-    # Covariance matrix
-    cov = [[sd_pre**2, correlation * sd_pre * sd_post],
-           [correlation * sd_pre * sd_post, sd_post**2]]
-
-    scores = rng.multivariate_normal([mean_pre, mean_post], cov, size=n)
+    scores = rng.multivariate_normal(
+        [config.mean_pre, config.mean_post], cov, size=config.n
+    )
     ohs_pre = scores[:, 0]
     ohs_post = scores[:, 1]
 
@@ -58,14 +84,15 @@ def generate_synthetic_proms(
     # Covariates
     age_bands = ["50-59", "60-69", "70-79", "80+"]
     age_probs = [0.20, 0.35, 0.30, 0.15]
-    age_band = rng.choice(age_bands, size=n, p=age_probs)
+    age_band = rng.choice(age_bands, size=config.n, p=age_probs)
 
-    gender = rng.choice(["Male", "Female"], size=n, p=[0.42, 0.58])
+    gender = rng.choice(["Male", "Female"], size=config.n, p=[0.42, 0.58])
 
-    imd_quintile = rng.choice([1, 2, 3, 4, 5], size=n, p=[0.15, 0.20, 0.22, 0.22, 0.21])
+    imd_quintile = rng.choice(
+        [1, 2, 3, 4, 5], size=config.n, p=[0.15, 0.20, 0.22, 0.22, 0.21]
+    )
 
-    # Introduce covariate effects on outcomes
-    # Older patients and more deprived patients have slightly worse post-op scores
+    # Covariate effects on outcomes
     age_effect = np.where(age_band == "80+", -3, np.where(age_band == "70-79", -1, 0))
     imd_effect = np.where(imd_quintile >= 4, -2, 0)
     ohs_post = np.clip(ohs_post + age_effect + imd_effect, 0, 48)
@@ -82,19 +109,28 @@ def generate_synthetic_proms(
     return df
 
 
-def get_or_create_synthetic(n: int = 10_000) -> pd.DataFrame:
+def get_or_create_synthetic(
+    n: int = 10_000,
+    config: SyntheticConfig | None = None,
+) -> pd.DataFrame:
     """Load synthetic data from cache or generate fresh.
 
-    Saves to PROCESSED_DATA_DIR for reuse.
+    Args:
+        n: Number of records (used if config is None)
+        config: Full configuration. If None, uses high-effect default with n.
     """
+    if config is None:
+        config = SyntheticConfig(n=n)
+
     PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
-    path = PROCESSED_DATA_DIR / "proms_hip_complete.parquet"
+    filename = f"proms_hip_{config.label}.parquet"
+    path = PROCESSED_DATA_DIR / filename
 
     if path.exists():
         return pd.read_parquet(path)
 
-    print("Generating synthetic PROMs data ...")
-    df = generate_synthetic_proms(n=n)
+    print(f"Generating synthetic PROMs data ({config.label}, gain≈{config.mean_gain:.0f}) ...")
+    df = generate_synthetic_proms(config)
     df.to_parquet(path, index=False)
     print(f"Saved {len(df)} records to {path}")
     return df

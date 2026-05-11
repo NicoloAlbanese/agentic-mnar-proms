@@ -25,7 +25,7 @@ DELTA_GRID = [-2.0, -1.5, -1.0, -0.5, -0.25, 0.0, 0.25, 0.5, 1.0, 1.5, 2.0]
 MISSINGNESS_RATES = [0.10, 0.20, 0.30, 0.40]
 
 # Bedrock model configuration
-BEDROCK_MODEL_ID = "anthropic.claude-sonnet-4-20250514"
+BEDROCK_MODEL_ID = "us.anthropic.claude-sonnet-4-20250514-v1:0"
 BEDROCK_REGION = "us-east-1"
 
 # Ensure directories exist
