@@ -1,0 +1,31 @@
+abstract/
+context/
+
+tasklist.md
+AGENTS.md
+
+# Data & results (large files, reproducible)
+/data/
+/results/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# uv
+.python-version
+
+# IDE
+.vscode/
+.idea/
+.kiro/
+
+# OS
+.DS_Store
+Thumbs.db
