@@ -3,16 +3,15 @@
 from dataclasses import dataclass
 from itertools import product
 
-from src.config import DELTA_GRID, MISSINGNESS_RATES, N_SIMULATIONS, RANDOM_SEED
+from src.config import DELTA_GRID, MISSINGNESS_RATES, RANDOM_SEED
 
 
 @dataclass
 class SimulationScenario:
-    """A single simulation scenario configuration."""
+    """A single simulation scenario (one delta × missing_rate combination)."""
 
     delta: float
     missing_rate: float
-    n_replications: int
     sample_size: int
     seed: int
 
@@ -24,8 +23,7 @@ class SimulationScenario:
 def generate_all_scenarios(
     delta_grid: list[float] | None = None,
     missing_rates: list[float] | None = None,
-    n_replications: int = N_SIMULATIONS,
-    sample_size: int = 5000,
+    sample_size: int = 2000,
     base_seed: int = RANDOM_SEED,
 ) -> list[SimulationScenario]:
     """Generate all scenario combinations for the experiment.
@@ -43,7 +41,6 @@ def generate_all_scenarios(
             SimulationScenario(
                 delta=delta,
                 missing_rate=rate,
-                n_replications=n_replications,
                 sample_size=sample_size,
                 seed=base_seed + i * 1000,
             )

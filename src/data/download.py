@@ -27,8 +27,8 @@ from src.config import RAW_DATA_DIR
 
 
 EXPECTED_FILES = {
-    "hip_provider": RAW_DATA_DIR / "hip_provider_2324.csv",
-    "key_facts": RAW_DATA_DIR / "key_facts_2324.csv",
+    "hip_provider": RAW_DATA_DIR / "Hip Replacement Provider 2324 upload.csv",
+    "key_facts": RAW_DATA_DIR / "Key Facts Hip and Knee Replacements 2324 upload.csv",
 }
 
 

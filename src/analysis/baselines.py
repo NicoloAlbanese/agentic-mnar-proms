@@ -36,8 +36,9 @@ def complete_case_analysis(
     n = len(change)
     estimate = change.mean()
     se = change.std(ddof=1) / np.sqrt(n)
-    ci_lower = estimate - 1.96 * se
-    ci_upper = estimate + 1.96 * se
+    z = stats.norm.ppf(0.975)
+    ci_lower = estimate - z * se
+    ci_upper = estimate + z * se
 
     return AnalysisResult(
         estimate=estimate, se=se, ci_lower=ci_lower, ci_upper=ci_upper,
@@ -64,8 +65,9 @@ def mean_imputation(
     n = len(change)
     estimate = change.mean()
     se = change.std(ddof=1) / np.sqrt(n)
-    ci_lower = estimate - 1.96 * se
-    ci_upper = estimate + 1.96 * se
+    z = stats.norm.ppf(0.975)
+    ci_lower = estimate - z * se
+    ci_upper = estimate + z * se
 
     return AnalysisResult(
         estimate=estimate, se=se, ci_lower=ci_lower, ci_upper=ci_upper,
